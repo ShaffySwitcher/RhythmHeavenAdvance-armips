@@ -1,3 +1,8 @@
+# Disclaimer
+This patch has been ported to the decompilation of *Rhythm Tengoku* allowing for new functionality! Check out the new project which is still maintained [here](https://github.com/ShaffySwitcher/RhythmHeavenAdvance)!
+
+tl;dr: new updated link here: https://github.com/ShaffySwitcher/RhythmHeavenAdvance (avoid the RHAdvance one, as it isn't well maintened atleast for now)
+
 # Rhythm Heaven Advance
 ![Rhythm Heaven Advance](images/logo.svg?raw=true "Rhythm Heaven Advance")
 

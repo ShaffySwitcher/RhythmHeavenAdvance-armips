@@ -1,7 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env sh
 
-echo "You must have a system wide installation of Perl and Mono"
-
+for p in perl mono ffmpeg
+do
+    if ! (command -v $p >/dev/null)
+    then
+        echo "You must have Perl, Mono, and FFmpeg installed and available on PATH"
+        exit 1
+    fi
+done
 
 function nofile {
     read -p "Couldn't find a Rhythm Tengoku ROM, please place a Rev. 0 ROM named \"rh-jpn.gba\" in the root of the project."
@@ -27,31 +33,32 @@ function tools {
 function check {
     if [ -e "rh-jpn.gba" ];
     then 
-        if ! [ $(uname -o) == "Darwin" ]
+        if [ "$(uname -s)" = "Darwin" ]
         then
-            if $(md5sum -c md5sum.txt --status)
-            then
-                echo "-- File Passed Checks --"
-                tools
-            else
-                echo "-- File Failed Checks --"
-                nofile
-            fi
+            md5check="md5"
         else
-            if $(md5 md5sum.txt)
-            then
-                echo "-- File Passed Checks --"
-                tools
-            else
-                echo "-- File Failed Checks --"
-                nofile
-            fi
+            md5check="md5sum --status -c"
+        fi
+        if ($md5check md5sum.txt)
+        then
+            echo "-- File Passed Checks --"
+            tools
+        else
+            echo "-- File Failed Checks --"
+            nofile
         fi
     else
         echo "-- File Failed Checks --"
         nofile
     fi
 }
+
+if [ "$(uname -s)" = "Darwin" ]
+then
+    toolsDir=tools/osx
+else
+    toolsDir=tools/lin
+fi
 
 check
 
@@ -62,19 +69,19 @@ perl "tools/abcde/abcde.pl" -cm abcde::Atlas "build/rh-atlus.gba" "src/script.tx
 echo "-- Compile Bitmap --"
 for file in $(cat src/bitmaps_to_compile.md | sed 1,1d)
 do
-    tools/lin/4bmpp -p $file
+    $toolsDir/4bmpp -p $file
 done
 
 echo "-- Compile Graphics --"
 for file in $(cat src/graphics_to_compile.md | sed 1,1d)
 do
-    mono tools/win/DSDecmp.exe -c lz10 $file.bin $file
+    mono $toolsDir/DSDecmp.exe -c lz10 $file.bin $file
 done
 
 echo "-- Compile Tile Maps --"
 for file in $(cat src/tilemaps_to_compile.md | sed 1,1d)
 do
-    mono tools/win/rhcomp.exe $file
+    mono $toolsDir/rhcomp.exe $file
 done
 
 echo "-- Compile Audio --"
@@ -87,15 +94,7 @@ done
 
 echo "-- Compile Code --"
 
-if ! [ $(uname -o) == "Darwin" ]
-then
-    armips=tools/lin/armips
-else
-    armips=tools/osx/armips
-fi
-
-chmod a+x $armips
-if ! $armips src/main.asm
+if ! ($toolsDir/armips src/main.asm)
 then
     fail
 fi
@@ -103,5 +102,4 @@ fi
 rm -f build/rh-atlus.gba
 read -p "Building complete! (Press enter to recompile!)"
 
-clear
 check
